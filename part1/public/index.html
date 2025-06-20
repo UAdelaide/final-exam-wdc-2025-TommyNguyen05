@@ -1,12 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Express</title>
-    <link rel="stylesheet" href="/stylesheets/violateInterface.css">
+    <title>WELCOME TO THE SUPER AMAZING DOG WALKING SERVICE</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        body {
+        font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+        background: linear-gradient(90deg, pink, lightblue);
+        color: #cfc905;
+        padding: 50px;
+        }
+
+        a {
+        color: #00B7FF;
+        }
+
+        .mainContent {
+        margin: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        }
+
+        .big-button {
+        margin-left: 950px;
+        padding: 20px;
+        background: #e0e0e0;
+        border: 3px dashed red;
+        cursor: pointer;
+        }
+
+        img {
+        max-width: 100%;
+        border: 10px solid yellow;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Express</h1>
-    <p>Welcome to Express</p>
+    <div id="app">
+    <div class="mainContent">
+        <h2>DOG OF THE DAY?</h2>
+        <div class="big-button" @click="showDog = true">CLICK HERE to view dog (maybe) (if you can reach)</div>
+        <template v-if="showDog">
+            <div>{{ dogName }}</div>
+            <img :src="imgUrl">
+            <div>Breed? who knows!</div>
+        </template>
+    </div>
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    imgUrl: '',
+                    showDog: false,
+                    dogName: 'Unbelievable Doggo'
+                };
+            },
+
+            mounted() {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', 'https://dog.ceo/api/breeds/image/random', true);
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            const data = JSON.parse(xhr.responseText);
+                            this.imgUrl = data.message;
+                        } else {
+                            console.error('AJAX error:', xhr.status);
+                        }
+                    }
+                };
+                xhr.send();
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>

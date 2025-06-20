@@ -1,8 +1,30 @@
 body {
-  padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background: linear-gradient(90deg, pink, lightblue);
+  color: #cfc905;
+  padding: 50px;
 }
 
 a {
   color: #00B7FF;
+}
+
+.mainContent {
+  margin: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.big-button {
+  margin-left: 950px;
+  padding: 20px;
+  background: #e0e0e0;
+  border: 3px dashed red;
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  border: 10px solid yellow;
 }
