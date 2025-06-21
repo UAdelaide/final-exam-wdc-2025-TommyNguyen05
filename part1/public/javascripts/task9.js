@@ -9,20 +9,16 @@ createApp({
         };
     },
 
-    mounted() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', 'https://dog.ceo/api/breeds/image/random', true);
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    const data = JSON.parse(xhr.responseText);
-                    this.imgUrl = data.message;
-                } else {
-          console.error('AJAX error:', xhr.status);
-        }
+    async mounted() {
+      try {
+        // Fetch a random dog image from dog.ceo API
+        const response = await fetch('https://dog.ceo/api/breeds/image/random');
+        // Parse the JSON response
+        const data = await response.json();
+        // Assign the image URL to the message received
+        this.imgUrl = data.message;
+      } catch (err) {
+      console.error('Could not load dog image:', err);
       }
-    };
-
-    xhr.send();
-  }
+    }
 }).mount('#app');
