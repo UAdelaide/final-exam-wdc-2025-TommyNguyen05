@@ -23,10 +23,13 @@
         <form @submit.prevent="submitWalkRequest">
           <div class="mb-3">
             <label class="form-label">Select Your Dog</label>
+            <!-- (Task 15) Dropdown for selecting a dog -->
+            <!-- v-model binds the selected dog_id to form.dog_id -->
             <select v-model="form.dog_id" class="form-select" required>
               <option value="" disabled>-- Choose a dog --</option>
               <option v-for="dog in dogs" :key="dog.dog_id" :value="dog.dog_id">{{ dog.name }}</option>
             </select>
+
           </div>
           <div class="mb-3">
             <label class="form-label">Requested Date & Time</label>
@@ -85,10 +88,10 @@
         const walks = ref([]);
         const message = ref('');
         const error = ref('');
-        // Adding a ref for dogs
+        // (Task 15) Adding a ref for dogs
         const dogs = ref([]);
 
-        // Load dogs from the API
+        // (Task 15) Load dogs from the API
         async function loadDogs() {
           try {
             // Fetch the list of dogs from the API
