@@ -9,8 +9,11 @@
 </head>
 <body class="bg-light">
   <div id="app" class="container py-4">
-    <h1 class="mb-4 text-primary">Owner Dashboard</h1>
-
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="text-primary m-0">Owner Dashboard</h1>
+      <!-- (Task 14) Logout button -->
+      <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
     <!-- Walk request form -->
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">
@@ -19,8 +22,11 @@
       <div class="card-body">
         <form @submit.prevent="submitWalkRequest">
           <div class="mb-3">
-            <label class="form-label">Dog ID</label>
-            <input v-model="form.dog_id" type="number" class="form-control" required>
+            <label class="form-label">Select Your Dog</label>
+            <select v-model="form.dog_id" class="form-select" required>
+              <option value="" disabled>-- Choose a dog --</option>
+              <option v-for="dog in dogs" :key="dog.dog_id" :value="dog.dog_id">{{ dog.name }}</option>
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label">Requested Date & Time</label>
@@ -79,6 +85,21 @@
         const walks = ref([]);
         const message = ref('');
         const error = ref('');
+        // Adding a ref for dogs
+        const dogs = ref([]);
+
+        // Load dogs from the API
+        async function loadDogs() {
+          try {
+            // Fetch the list of dogs from the API
+            const res = await fetch('/api/dogs/my-dogs');
+            if (!res.ok) throw new Error('Could not load dogs');
+            // Parse the response as JSON
+            dogs.value = await res.json();
+          } catch (err) {
+            error.value = err.message;
+          }
+        }
 
         async function loadWalks() {
           try {
@@ -116,18 +137,29 @@
         }
 
         onMounted(() => {
+          // Added loadDogs()
+          loadDogs();
           loadWalks();
         });
 
         return {
           form,
           walks,
+          dogs,
           message,
           error,
           submitWalkRequest
         };
       }
     }).mount('#app');
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        // include cookies so the server knows which session to kill
+        await fetch('/api/users/logout', { method: 'POST', credentials: 'same-origin' });
+      } catch {}
+      // go back on the login page
+      window.location.href = '/';
+    });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

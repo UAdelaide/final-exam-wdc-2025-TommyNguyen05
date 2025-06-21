@@ -35,24 +35,41 @@ router.get('/me', (req, res) => {
   res.json(req.session.user);
 });
 
-// POST login (dummy version)
+// POST login /api/users/login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
   try {
-    const [rows] = await db.query(`
+    const [[user]] = await db.query(`
       SELECT user_id, username, role FROM Users
-      WHERE email = ? AND password_hash = ?
-    `, [email, password]);
+      WHERE username = ? AND password_hash = ?
+    `, [username, password]);
 
-    if (rows.length === 0) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    res.json({ message: 'Login successful', user: rows[0] });
+    // Store user info in session
+    req.session.user = user;
+
+    // indicate with dashboard to open according to user role
+    res.json({ message: 'Login successful', role: user.role });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });
   }
+});
+
+// POST logout /api/users/logout
+router.post('/logout', (req, res) => {
+  // destroy the session
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+    // wipe the cookie that held the session-id
+    res.clearCookie('connect.sid');
+    res.json({ message: 'Logout successful' });
+  });
 });
 
 module.exports = router;

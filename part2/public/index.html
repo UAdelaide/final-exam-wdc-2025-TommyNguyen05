@@ -7,26 +7,165 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
-<body class="bg-light">
+<body class="bg-light" style="max-width: 40%; margin: auto;">
 
   <div id="app" class="container py-5">
     <h1 class="mb-4 text-primary">{{ message }}</h1>
-    <p class="lead">Connect with trusted walkers for your beloved dog!</p>
+    <!-- <p class="lead">Connect with trusted walkers for your beloved dog!</p> -->
 
-    <a href="owner-dashboard.html" class="btn btn-outline-primary me-2">Owner Dashboard</a>
-    <a href="walker-dashboard.html" class="btn btn-outline-success">Walker Dashboard</a>
+    <!-- <a href="owner-dashboard.html" class="btn btn-outline-primary me-2">Owner Dashboard</a>
+    <a href="walker-dashboard.html" class="btn btn-outline-success">Walker Dashboard</a> -->
+
+    <!-- Login form -->
+    <!-- submit event for Vue to handle, call handleLogin -->
+    <form @submit="handleLogin">
+      <!-- Username field -->
+      <div class ="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <!-- Bind the input value to the username ref -->
+        <input v-model="username" type="text" class="form-control" id="username" required>
+      </div>
+
+      <!-- Password field -->
+      <div class ="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <!-- To bind the input value to the password ref -->
+        <input v-model="password" type="password" class="form-control" id="password" required>
+      </div>
+      <!-- submit button -->
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+
+    <!-- Dog Table -->
+    <div id="dogTable" class="container my-5">
+      <h2 class="mb-3">All Registered Dogs</h2>
+      <!-- Formatting the table -->
+      <!-- the table will appear only when dogs are loaded -->
+      <table v-if="dogs.length" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Dog ID</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Owner ID</th>
+            <th>Photo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loop through each dog in the dogs array -->
+          <tr v-for="dog in dogs" :key="dog.dog_id">
+            <td>{{ dog.dog_id }}</td>
+            <td>{{ dog.name }}</td>
+            <td>{{ dog.size }}</td>
+            <td>{{ dog.owner_id }}</td>
+            <td>
+              <!-- images fetched from dog.ceo/api/breeds/image/random -->
+              <img :src="dog.photoUrl" :alt="`Photo of ${dog.name}`" style="height:70px; width:auto; object-fit:cover;" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Loading message when the table haven't loaded -->
+      <p v-else class="text-muted">Loading dog list…</p>
+    </div>
+
+    <!-- Error message -->
+    <div v-if="error" class="alert alert-danger mt-4">{{ error }}</div>
   </div>
 
+  <!-- handling Vue.js directly -->
   <script>
-    const { createApp } = Vue;
-    createApp({
-      data() {
-        return {
-          message: 'Welcome to the Dog Walking Service!'
-        };
+  const { createApp, ref, onMounted } = Vue;
+
+  createApp({
+    data() {
+      return {
+        message: 'Welcome to the Dog Walking Service!'
+      };
+    },
+    setup() {
+      // all the refs needed for the login and dog list
+      const username = ref('');
+      const password = ref('');
+      const loading = ref(false);
+      const error = ref('');
+      // for holding the list of dogs
+      const dogs = ref([]);
+
+      // async login handler
+      const handleLogin = async () => {
+        // initialise loading and error states
+        loading.value = true;
+        error.value = '';
+        // POST login request to the server
+        try {
+          const res = await fetch('/api/users/login', {
+            method: 'POST',
+            // set the request headers to indicate that the body is JSON
+            headers: { 'Content-Type': 'application/json' },
+            // send the name and password as JSON string
+            body: JSON.stringify({ username: username.value, password: password.value })
+          });
+          // parse the response
+          const data = await res.json();
+          // check if the response is "ok", throw error if not
+          if (!res.ok) throw new Error(data.error || 'Log-in failed');
+          // successful login and assign appropriate dashboard based on role
+          let target = '';
+          if (data.role === 'owner') {
+            target = 'owner-dashboard.html';
+          } else if (data.role === 'walker') {
+            target = 'walker-dashboard.html';
+          } else {
+            throw new Error('Unknown user role');
+          }
+          // redirect to the target dashboard
+          window.location.href = target;
+        } catch (err) {
+          error.value = err.message;
+        } finally {
+          loading.value = false;
+        }
+      };
+
+      // Load dogs from the API on mount upon the page load
+      // using the new URL for the dog list for logged-out users
+      onMounted(async () => {
+      try {
+        // fetch the list of dogs from the API
+        const res = await fetch('/api/dogs');
+        if (!res.ok) throw new Error('Failed to load dogs');
+        // parse the response as JSON
+        const dbDogs = await res.json();
+        // fetch a random image for each dog until "all" images are fetched
+        const dogPictures = await Promise.all(
+          // to map through each dog and fetch a random image
+          dbDogs.map(async d => {
+            try {
+              const imageRes = await fetch('https://dog.ceo/api/breeds/image/random');
+              const { message } = await imageRes.json();
+              return { ...d, photoUrl: message };
+            } catch {
+              // if the fails to fetch image, replace with a placeholder image
+              return { ...d, photoUrl: 'https://placehold.co/70x70?text=%F0%9F%90%BE'};
+            }
+          })
+        );
+
+        dogs.value = dogPictures;
+      } catch (err) {
+        error.value = err.message;
       }
-    }).mount('#app');
-  </script>
+    });
+
+    return {
+      message: 'Welcome to the Dog Walking Service!',
+      username, password, loading, error, handleLogin, dogs
+    };
+  }
+}).mount('#app');
+</script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
